@@ -1,0 +1,36 @@
+#!/bin/csh -f
+
+Compile()
+{
+if [ $2 == 1 ]; then
+    cc -c ./libc/$1.c -L/opt/X11/lib -I/opt/X11/include
+else
+    cc -c ./libc/$1.c
+fi
+ar ruv ./lib/lib$1.a $1.o
+ranlib ./lib/lib$1.a
+rm -f ./$1.o
+}
+
+Compile plot 1
+Compile network 0
+Compile random 0
+
+#
+#  Compile 'V1m', the main program
+#
+   cd src
+
+  cc -O2 -o ../bin/v1m v1m.c -L../lib -I../libc \
+  -L/opt/X11/lib -I/opt/X11/include \
+  -lGL -lX11 -lplot -lnetwork -lrandom
+#  -lwm_util -lmod_pop_util -lmod_dog_util -lmod_wav_util \
+
+
+   cd ..
+
+# 
+# Run 'V1m', the main program
+#
+
+./bin/v1m
