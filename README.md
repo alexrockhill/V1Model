@@ -16,17 +16,12 @@ be edited as needed.
 
 (1)  Compile the libraries and main programs*
 
-  source ./s/compile_lib
-  source ./s/compile_main
+  source ./s/compile
 
  *Note, the compile_... and mlm_... scripts in ./s/ contain
   references to paths for OpenGL and X11 libraries and headers.
   Please edit these files and change the paths if needed.
 
-
-(2)  Test the code by running the model, see ./demo/README
-
-
-(3)  For help, contact:  aprockhill206@gmail.com
+(2)  For help, contact:  aprockhill206@gmail.com
 
 *Adapted from wm by Wyeth Bair* 
