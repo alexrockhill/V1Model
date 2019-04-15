@@ -3,13 +3,14 @@
 #include "random.h"
 #include "network.h"
 
-struct network make_network(dim,oris,seed)
-    int dim,oris,seed;
+struct network make_network(dim, oris, n_steps, seed)
+    int dim, oris, n_steps, seed;
 {
     struct hc **cols;
     struct network nw;
     nw.dim = dim;
     nw.oris = oris;
+    nw.n_steps = n_steps;
     cols = malloc(dim * sizeof(struct hc *));
     for(int i=0;i<dim;i++){
     	cols[i] = malloc(dim * sizeof(struct hc));

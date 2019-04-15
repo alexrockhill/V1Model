@@ -10,6 +10,7 @@ struct hc{
 struct network{
 	int dim;
 	int oris;
+	int n_steps;
 	struct hc **cols;
 };
 extern struct network make_network();

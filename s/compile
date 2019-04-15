@@ -1,9 +1,52 @@
-#!/bin/csh -f
+#
+# Save command line arguments to text file
+#
+
+if [ -e ./bin/args.txt ]; then
+	rm ./bin/args.txt
+fi
+
+if [ -e ./bin/args2.txt ]; then
+	rm ./bin/args2.txt
+fi
+
+echo -n >> ./bin/args.txt
+
+for ((i=0;i<"$#";++i)); do
+	arg=${!i}
+    if [ "${arg:0:2}" == "--" ]; then
+    	if [[ ! "${arg:2:${#arg}-1}" =~ ^(loc|lat|loc_sig|lat_sig|dim|oris|seed|n_steps)$ ]]; then
+	    	echo "flag ${arg} not recognized"
+            return
+        else
+        	j=$(($i+1))
+        	echo "$arg ${!j}" >> ./bin/args.txt
+        fi
+    fi
+done
+
+keywords=( --loc_sig --lat_sig --dim --oris --seed --loc --lat --n_steps)
+default_args=( 12 14 10 4 11 mexican_hat gaussian 5)
+keyword2=$(cut -d' ' -f1 ./bin/args.txt)
+echo $keyword2 | tr " " "\n" >> ./bin/args2.txt
+for ((i=0;i<${#keywords[@]};++i)); do
+	if ! [[ "${keywords[i]}" =~  $(echo ^\($(paste -sd'|' ./bin/args2.txt)\)$) ]]; then
+		echo "${keywords[i]} ${default_args[i]}" >> ./bin/args.txt
+	fi
+done
+
+rm ./bin/args2.txt
+
+########################################################################################
+
+#
+# Compile libc files
+#
 
 Compile()
 {
 if [ $2 == 1 ]; then
-    cc -c ./libc/$1.c -L/opt/X11/lib -I/opt/X11/include
+    cc -c ./libc/$1.c -I/opt/X11/include #-L/opt/X11/lib
 else
     cc -c ./libc/$1.c
 fi

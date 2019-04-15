@@ -2,25 +2,51 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "plot.h" 
 #include "network.h"
 #include "random.h"
 
-int main()
-{
-	int seed = 11;
-	int dim = 2;
-	int oris = 4;
-	struct network nw = make_network(dim,oris);
-	for(int i=0;i<nw.dim;i++){
-		for(int j=0;j<nw.dim;j++){
-			for(int k=0;k<nw.oris;k++){
-				printf("%i\n", nw.cols[i][j].ns[k].x);
-				printf("%i\n", nw.cols[i][j].ns[k].y);
-				printf("%f\n", nw.cols[i][j].ns[k].ori);
-				printf("%f\n", nw.cols[i][j].ns[k].v);
-			}
+#define SLEN 100
+
+struct args {
+	int seed, dim, oris, n_steps;
+	float loc_sig,lat_sig;
+	char loc[SLEN], lat[SLEN];
+};
+
+struct args parse_args() {
+	struct args this_args;
+	FILE *fp = fopen("./bin/args.txt","rb");
+	char args[SLEN];
+	while (fgets(args, SLEN, fp) != NULL) {
+		char *flag = strtok(args, " ");
+		char *ptr = strtok(NULL, " \n");
+		if (strcmp(flag, "--seed") == 0) {
+			this_args.seed = atoi(ptr);
+		} else if (strcmp(flag, "--dim") == 0){
+			this_args.dim = atoi(ptr);
+		} else if (strcmp(flag, "--oris") == 0) {
+			this_args.oris = atoi(ptr);} 
+		else if (strcmp(flag, "--n_steps") == 0) {
+			this_args.n_steps = atoi(ptr);
+		} else if (strcmp(flag, "--loc_sig") == 0) {
+			this_args.loc_sig = strtof(ptr, NULL);
+		} else if (strcmp(flag, "--lat_sig") == 0) {
+			this_args.lat_sig = strtof(ptr, NULL);
+		} else if (strcmp(flag, "--loc") == 0) {
+			strcpy(this_args.loc, ptr);
+		} else if (strcmp(flag, "--lat") == 0) {
+			strcpy(this_args.lat, ptr);
 		}
 	}
+	return this_args;
+}
+int main()
+{
+	struct args this_args = parse_args();
+	struct network nw = make_network(this_args.dim, this_args.oris, 
+		                             this_args.n_steps, this_args.seed);
+	plot_network(nw);
 	take_down_network(nw);
 }

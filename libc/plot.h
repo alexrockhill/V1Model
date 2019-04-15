@@ -1,1 +1,1 @@
-extern void plot_line();
+extern int plot_network();
