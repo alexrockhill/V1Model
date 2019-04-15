@@ -19,6 +19,7 @@ void fatalError(char *estr)
   exit(1);
 }
 
+// glplot_util.c, wm
 void draw_box(r,g,b,x,y,w,h)
      float r,g,b;      
      float x,y,w,h;    
@@ -32,6 +33,28 @@ void draw_box(r,g,b,x,y,w,h)
   glEnd();
 }
 
+// https://stackoverflow.com/questions/7706339/grayscale-to-red-green-blue-matlab-jet-color-scale
+double interpolate( double val, double y0, double x0, double y1, double x1 ) {
+  return (val-x0)*(y1-y0)/(x1-x0) + y0;
+}
+double blue( double grayscale ) {
+  if ( grayscale < -0.33 ) return 1.0;
+  else if ( grayscale < 0.33 ) return interpolate( grayscale, 1.0, -0.33, 0.0, 0.33 );
+  else return 0.0;
+}
+double green( double grayscale ) {
+  if ( grayscale < -1.0 ) return 0.0; // unexpected grayscale value
+  if  ( grayscale < -0.33 ) return interpolate( grayscale, 0.0, -1.0, 1.0, -0.33 );
+  else if ( grayscale < 0.33 ) return 1.0;
+  else if ( grayscale <= 1.0 ) return interpolate( grayscale, 1.0, 0.33, 0.0, 1.0 );
+  else return 1.0; // unexpected grayscale value
+}
+double red( double grayscale ) {
+  if ( grayscale < -0.33 ) return 0.0;
+  else if ( grayscale < 0.33 ) return interpolate( grayscale, 0.0, -0.33, 1.0, 0.33 );
+  else return 1.0;
+}
+
 int plot_network(nw)
   struct network nw;
 {
@@ -43,9 +66,10 @@ int plot_network(nw)
   XSetWindowAttributes  swa;
   GLXContext            cx;
   XEvent                event;
-  int                   screen_num, t_ind;
+  int                   screen_num, t_ind, ori_ind;
   unsigned int          display_width, display_height, size; 
   float                 delta;
+  static Bool           displayListInited = False;
 
   if(!(dpy = XOpenDisplay(NULL)))
     fatalError("could not open display");
@@ -84,22 +108,22 @@ int plot_network(nw)
   glLoadIdentity();
   glOrtho(0.0,1.0,0.0,0.0,0.0,1.0);
 
-  static Bool displayListInited = False;
-
   t_ind = 0;
+  ori_ind = 0;
   while(t_ind < nw.n_steps) {
     XNextEvent(dpy, &event);
+    //XClearWindow(dpy, win);
     if(displayListInited)
       glCallList(1);
     else {
-      glNewList(1,GL_COMPILE_AND_EXECUTE); 
+      glNewList(1, GL_COMPILE_AND_EXECUTE); 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       for(int i=0;i<nw.dim;i++){
           for(int j=0;j<nw.dim;j++){
-              float this_v = nw.cols[i][j].ns[0].v;
-              float x = nw.cols[i][j].ns[0].x*delta-1;
-              float y = nw.cols[i][j].ns[0].y*delta-1;
-              draw_box(this_v+0.5, 0.5-this_v, 0, x, y, delta, delta);
+              float v = nw.cols[i][j].ns[ori_ind].v[t_ind];
+              float x = nw.cols[i][j].ns[ori_ind].x*delta-1;
+              float y = nw.cols[i][j].ns[ori_ind].y*delta-1;
+              draw_box(red(v), green(v), blue(v), x, y, delta, delta);
           }
       }
       glEndList();
@@ -111,6 +135,13 @@ int plot_network(nw)
       glFlush();
     usleep(500000);
     t_ind++;
+    if (t_ind == nw.n_steps && ori_ind < nw.oris) {
+      printf("%i\n", t_ind);
+      t_ind = 0;
+      //ori_ind++;
+      //printf("%f orientation", nw.cols[0][0].ns[ori_ind].ori);
+    }
+    printf("%i\n", t_ind);
   }
   XCloseDisplay(dpy);
   return(0);

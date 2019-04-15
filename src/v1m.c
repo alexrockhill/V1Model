@@ -11,7 +11,7 @@
 
 struct args {
 	int seed, dim, oris, n_steps;
-	float loc_sig,lat_sig;
+	float loc_sig,lat_sig, mexican_hat_ratio;
 	char loc[SLEN], lat[SLEN];
 };
 
@@ -46,7 +46,10 @@ int main()
 {
 	struct args this_args = parse_args();
 	struct network nw = make_network(this_args.dim, this_args.oris, 
-		                             this_args.n_steps, this_args.seed);
-	plot_network(nw);
+		                             this_args.n_steps,
+		                             this_args.loc_sig, this_args.lat_sig,
+		                             this_args.loc, this_args.lat,
+		                             this_args.seed);
+	//plot_network(nw);
 	take_down_network(nw);
 }

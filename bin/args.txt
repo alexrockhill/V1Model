@@ -1,0 +1,8 @@
+--loc_sig 12
+--lat_sig 14
+--dim 10
+--oris 4
+--seed 11
+--loc mexican_hat
+--lat gaussian
+--n_steps 10
