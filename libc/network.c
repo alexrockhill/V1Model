@@ -5,6 +5,9 @@
 #include "random.h"
 #include "network.h"
 
+float logistic(float x) {
+	return 1.0/(1 + exp(-x));
+}
 
 float gaussian1D(float a, float x0, float x1, float sigma) {
 	return a*exp(-((pow(x1 - x0, 2) / (2 * pow(sigma, 2)))));
@@ -33,14 +36,14 @@ void update_network(nw)
 	} else if (strcmp(nw.loc,"mexican_hat") == 0) {
 		loc_f = &mexican_hat1D; 
 	} else {
-		fprintf(stderr, "%s function not recognized\n", nw.loc);
+		fprintf(stderr, "loc %s function not recognized\n", nw.loc);
 	}
 	if (strcmp(nw.lat,"gaussian")==0) {
 		lat_f = &gaussian2D; 
-	} else if (strcmp(nw.loc,"mexican_hat") == 0) {
+	} else if (strcmp(nw.lat,"mexican_hat") == 0) {
 		lat_f = &mexican_hat2D; 
 	} else {
-		fprintf(stderr, "%s function not recognized\n", nw.lat);
+		fprintf(stderr, "lat %s function not recognized\n", nw.lat);
 	}
 	//printf("Updating network over %i time steps: \n", nw.n_steps);
 	for (int t_ind=1; t_ind < nw.n_steps; t_ind++) {
@@ -73,17 +76,9 @@ void update_network(nw)
 	  	    for (int j=0; j < nw.dim; j++){
 	  		    for (int k=0; k < nw.oris; k++){
 	  		    	float delta_v = update_matrix[i][j][k]; // / (nw.dim * nw.dim * nw.oris));
-	  		    	/*if (delta_v > 10 || delta_v < -10) {
-	  		    		printf("%f %i %i %i\n", delta_v, i, j, k);
-	  		    	}*/
 	  		    	if (delta_v == delta_v) {  // is not nan
-	  		    		nw.cols[i][j].ns[k].v[t_ind] += delta_v;
+	  		    		nw.cols[i][j].ns[k].v[t_ind] = logistic(nw.cols[i][j].ns[k].v[t_ind] + delta_v);
 	  		    	}
-	  		    	/*if (nw.cols[i][j].ns[k].v[t_ind] < -1) {
-	  		    		nw.cols[i][j].ns[k].v[t_ind] = -1;
-	  		    	} else if (nw.cols[i][j].ns[k].v[t_ind] > 1) {
-	  		    		nw.cols[i][j].ns[k].v[t_ind] = 1;
-	  				}*/
 	  				//printf("%.2f\n", nw.cols[i][j].ns[k].v[t_ind]);
 	  		    }
 	  		}

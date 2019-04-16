@@ -109,13 +109,10 @@ int plot_network(nw)
   glOrtho(0.0,1.0,0.0,0.0,0.0,1.0);
 
   t_ind = 0;
-  //ori_ind = 0;
-  //printf("Displaying orientation %.2f\n", nw.cols[0][0].ns[ori_ind].ori);
   while(t_ind < nw.n_steps) {
     XNextEvent(dpy, &event);
-    XClearWindow(dpy, win);
-    glNewList(1, GL_COMPILE_AND_EXECUTE); 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //XClearWindow(dpy, win);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ACCUM_BUFFER_BIT);
     for(int i=0;i<nw.dim;i++){
         for(int j=0;j<nw.dim;j++){
             float v = 0;
@@ -128,7 +125,6 @@ int plot_network(nw)
             draw_box(red(v), green(v), blue(v), x, y, delta, delta);
         }
     }
-    glEndList();
     if(doubleBuffer)
       glXSwapBuffers(dpy, win); 
     else
@@ -136,12 +132,6 @@ int plot_network(nw)
     printf("Time: %i\n", t_ind);
     usleep(500000);
     t_ind++;
-    /*if (t_ind == nw.n_steps && ori_ind < nw.oris) {
-      printf("%i\n", t_ind);
-      t_ind = 0;
-      ori_ind++;
-      printf("Displaying orientation %f\n", nw.cols[0][0].ns[ori_ind].ori);
-    }*/
   }
   XCloseDisplay(dpy);
   return(0);
