@@ -18,7 +18,7 @@ be edited as needed.
 
   source ./s/compile
 
- *Note, the compile_... and mlm_... scripts in ./s/ contain
+ *Note, the ./s/compile script contains
   references to paths for OpenGL and X11 libraries and headers.
   Please edit these files and change the paths if needed.
 

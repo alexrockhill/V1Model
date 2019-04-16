@@ -50,6 +50,6 @@ int main()
 		                             this_args.loc_sig, this_args.lat_sig,
 		                             this_args.loc, this_args.lat,
 		                             this_args.seed);
-	//plot_network(nw);
+	plot_network(nw);
 	take_down_network(nw);
 }

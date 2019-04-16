@@ -23,6 +23,68 @@ float mexican_hat2D(float a, float x0, float x1, float y0, float y1, float sigma
 		    exp(-((pow(x1 - x0, 2) + pow(y1 - y0, 2)) / (2*pow(sigma, 2)))); //(1/(M_PI*pow(sigma,2)))
 }
 
+void update_network(nw)
+	struct network nw;
+{	
+	float (*loc_f)(float, float, float, float);
+	float (*lat_f)(float, float, float, float, float, float);
+	if (strcmp(nw.loc,"gaussian") == 0) {
+		loc_f = &gaussian1D; 
+	} else if (strcmp(nw.loc,"mexican_hat") == 0) {
+		loc_f = &mexican_hat1D; 
+	} else {
+		fprintf(stderr, "%s function not recognized\n", nw.loc);
+	}
+	if (strcmp(nw.lat,"gaussian")==0) {
+		lat_f = &gaussian2D; 
+	} else if (strcmp(nw.loc,"mexican_hat") == 0) {
+		lat_f = &mexican_hat2D; 
+	} else {
+		fprintf(stderr, "%s function not recognized\n", nw.lat);
+	}
+	printf("Updating network over %i time steps: \n", nw.n_steps);
+	for (int t_ind=1; t_ind < nw.n_steps; t_ind++) {
+		printf("%i\n", t_ind);
+		float update_matrix[nw.dim][nw.dim][nw.oris];
+		for (int i=0; i < nw.dim; i++){
+	  	    for (int j=0; j < nw.dim; j++){
+	  		    for (int k=0; k < nw.oris; k++){
+	  		    	float ori = nw.cols[i][j].ns[k].ori;
+	  		    	for (int k1=0; k1 < nw.oris; k1++) {
+	  		    		if (k == k1) {  // Lateral excitements only between shared orientations
+		  		    		for (int i1=0; i1 < nw.dim; i1++){
+			  		    		for (int j1=0; j1 < nw.dim; j1++){
+			  		    			if (! ((i == i1) && (j == j1))){
+			  		    				float v = nw.cols[i1][j1].ns[k].v[t_ind-1];
+			  		    				update_matrix[i][j][k] += (*lat_f)(v, i, i1, j, j1, nw.lat_sig);
+			  		    			}
+			  		    		}
+			  		    	}
+			  		    } else {
+			  		    	float v = nw.cols[i][j].ns[k1].v[t_ind-1];
+			  		    	float ori1 = nw.cols[i][j].ns[k1].ori;
+	  		    			update_matrix[i][j][k] += (*loc_f)(v, ori, ori1, nw.loc_sig);
+	  		    		}
+	  		    	}
+	  		    }
+	  		}
+	  	}
+	  	for (int i=0; i < nw.dim; i++){
+	  	    for (int j=0; j < nw.dim; j++){
+	  		    for (int k=0; k < nw.oris; k++){
+	  		    	float next_v = nw.cols[i][j].ns[k].v[t_ind-1] + (update_matrix[i][j][k] / (nw.dim * nw.dim * nw.oris));
+	  		    	if (next_v < -1) {
+	  		    		next_v = -1;
+	  		    	} else if (next_v > 1) {
+	  		    		next_v = 1;
+	  		    	}
+	  		    	nw.cols[i][j].ns[k].v[t_ind] = next_v;
+	  		    }
+	  		}
+	  	}
+	}
+}
+
 struct network make_network(dim, oris, n_steps, loc_sig, lat_sig, loc, lat, seed)
     int dim, oris, n_steps, seed;
     float loc_sig, lat_sig;
@@ -48,71 +110,13 @@ struct network make_network(dim, oris, n_steps, loc_sig, lat_sig, loc, lat, seed
 				cols[i][j].ns[k].y = j;
 				cols[i][j].ns[k].ori = (float) (360/oris)*k;
 				cols[i][j].ns[k].v = malloc(n_steps * sizeof(float));
-  		    	cols[i][j].ns[k].v[0] = my_rand(&nw.seed);	
+  		    	cols[i][j].ns[k].v[0] = 2*(my_rand(&nw.seed)-0.5);
   		    }
   	    }
     }
     nw.cols=cols;
+    update_network(nw);
     return nw;
-}
-
-void update_network(nw)
-	struct network nw;
-{	
-	float (*loc_f)(float, float, float, float);
-	float (*lat_f)(float, float, float, float, float, float);
-	if (strcmp(nw.loc,"gaussian") == 0) {
-		loc_f = &gaussian1D; 
-	} else if (strcmp(nw.loc,"mexican_hat") == 0) {
-		loc_f = &mexican_hat1D; 
-	} else {
-		fprintf(stderr, "%s function not recognized\n", nw.loc);
-	}
-	if (strcmp(nw.lat,"gaussian")==0) {
-		lat_f = &gaussian2D; 
-	} else if (strcmp(nw.loc,"mexican_hat") == 0) {
-		lat_f = &mexican_hat2D; 
-	} else {
-		fprintf(stderr, "%s function not recognized\n", nw.lat);
-	}
-	for (int t_ind=1; t_ind < nw.n_steps; t_ind++) {
-		float update_matrix[nw.dim][nw.dim][nw.oris];
-		for (int i=0; i < nw.dim; i++){
-	  	    for (int j=0; j < nw.dim; j++){
-	  		    for (int k=0; k < nw.oris; k++){
-	  		    	float v = nw.cols[i][j].ns[k].v[t_ind-1];
-	  		    	float ori = nw.cols[i][j].ns[k].ori;
-	  		    	for (int k1=0; k1 < nw.oris; k1++) {
-	  		    		if (k == k1) {  // Lateral excitements only between shared orientations
-		  		    		for (int i1=0; i1 < nw.dim; i1++){
-			  		    		for (int j1=0; j1 < nw.dim; j1++){
-			  		    			if (! ((i == i1) && (j == j1))){
-			  		    				update_matrix[i1][j1][k1] += (*lat_f)(v, i, i1, j, j1, nw.lat_sig);
-			  		    			}
-			  		    		}
-			  		    	}
-			  		    } else {
-			  		    	float ori1 = nw.cols[i][j].ns[k1].ori;
-	  		    			update_matrix[i][j][k1] += (*loc_f)(v, ori, ori1, nw.loc_sig);
-	  		    		}
-	  		    	}
-	  		    }
-	  		}
-	  	}
-	  	for (int i=0; i < nw.dim; i++){
-	  	    for (int j=0; j < nw.dim; j++){
-	  		    for (int k=0; k < nw.oris; k++){
-	  		    	float next_v = nw.cols[i][j].ns[k].v[t_ind-1] + update_matrix[i][j][k];
-	  		    	/*if (next_v < -1) {
-	  		    		next_v = -1;
-	  		    	} else if (next_v > 1) {
-	  		    		next_v = 1;
-	  		    	}*/
-	  		    	nw.cols[i][j].ns[k].v[t_ind] = next_v;
-	  		    }
-	  		}
-	  	}
-	}
 }
 
 void take_down_network(nw)

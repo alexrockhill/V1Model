@@ -26,7 +26,7 @@ for ((i=0;i<"$#";++i)); do
 done
 
 keywords=( --loc_sig --lat_sig --dim --oris --seed --loc --lat --n_steps)
-default_args=( 12 14 10 4 11 mexican_hat gaussian 5)
+default_args=( 12 14 10 1 13 mexican_hat gaussian 8)
 keyword2=$(cut -d' ' -f1 ./bin/args.txt)
 echo $keyword2 | tr " " "\n" >> ./bin/args2.txt
 for ((i=0;i<${#keywords[@]};++i)); do
