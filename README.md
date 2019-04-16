@@ -16,7 +16,7 @@ be edited as needed.
 
 (1)  Compile the libraries and main programs*
 
-  source ./s/compile
+    source ./s/compile
 
  *Note, the ./s/compile script contains
   references to paths for OpenGL and X11 libraries and headers.
