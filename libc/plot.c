@@ -109,7 +109,8 @@ int plot_network(nw)
   glOrtho(0.0,1.0,0.0,0.0,0.0,1.0);
 
   t_ind = 0;
-  ori_ind = 0;
+  //ori_ind = 0;
+  //printf("Displaying orientation %.2f\n", nw.cols[0][0].ns[ori_ind].ori);
   while(t_ind < nw.n_steps) {
     XNextEvent(dpy, &event);
     XClearWindow(dpy, win);
@@ -117,9 +118,13 @@ int plot_network(nw)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     for(int i=0;i<nw.dim;i++){
         for(int j=0;j<nw.dim;j++){
-            float v = nw.cols[i][j].ns[ori_ind].v[t_ind];
-            float x = nw.cols[i][j].ns[ori_ind].x*delta-1;
-            float y = nw.cols[i][j].ns[ori_ind].y*delta-1;
+            float v = 0;
+            for (int k=0; k < nw.oris; k++) {
+                v += nw.cols[i][j].ns[k].v[t_ind];
+            }
+            v /= (float) nw.oris;
+            float x = nw.cols[i][j].ns[0].x*delta-1;
+            float y = nw.cols[i][j].ns[0].y*delta-1;
             draw_box(red(v), green(v), blue(v), x, y, delta, delta);
         }
     }
@@ -128,13 +133,14 @@ int plot_network(nw)
       glXSwapBuffers(dpy, win); 
     else
       glFlush();
-    usleep(1000000);
+    printf("Time: %i\n", t_ind);
+    usleep(500000);
     t_ind++;
     /*if (t_ind == nw.n_steps && ori_ind < nw.oris) {
       printf("%i\n", t_ind);
       t_ind = 0;
-      //ori_ind++;
-      //printf("%f orientation", nw.cols[0][0].ns[ori_ind].ori);
+      ori_ind++;
+      printf("Displaying orientation %f\n", nw.cols[0][0].ns[ori_ind].ori);
     }*/
   }
   XCloseDisplay(dpy);
