@@ -110,7 +110,9 @@ int plot_network(nw)
 
   t_ind = 0;
   while(t_ind < nw.n_steps) {
-    XNextEvent(dpy, &event);
+    while (XPending(dpy)) {
+      XNextEvent(dpy, &event);
+    }
     //XClearWindow(dpy, win);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ACCUM_BUFFER_BIT);
     for(int i=0;i<nw.dim;i++){
