@@ -1,8 +1,11 @@
---loc_sig 30
+--loc_mu 0.1
+--lat_mu 0.001
+--loc_sig 15
 --lat_sig 5
 --dim 30
---oris 20
---seed 12
---loc mexican_hat
+--oris 16
+--seed 21
+--loc gaussian
 --lat gaussian
---n_steps 7
+--n_steps 15
+--leak 0.5

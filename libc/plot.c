@@ -4,6 +4,7 @@
 #include  <X11/Xlib.h>
 #include  <GL/glx.h>
 #include  <GL/gl.h>
+#include  <math.h>
 #include  <png.h>  //http://www.libpng.org/pub/png/libpng.html brew install libpng
 #include  "network.h"
 
@@ -162,6 +163,7 @@ int plot_network(nw)
     }
     sprintf(fname, "dpy/%i.png", t_ind);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ACCUM_BUFFER_BIT);
+    float max_v = 0;
     for(int i=0;i<nw.args.dim;i++){
         for(int j=0;j<nw.args.dim;j++){
             float v = 0;
@@ -169,6 +171,18 @@ int plot_network(nw)
                 v += nw.cols[i][j].ns[k].v[t_ind];
             }
             v /= (float) nw.args.oris;
+            if (fabs(v) > max_v) {
+                max_v = fabs(v);
+            }
+        }
+    }
+    for(int i=0;i<nw.args.dim;i++){
+        for(int j=0;j<nw.args.dim;j++){
+            float v = 0;
+            for (int k=0; k < nw.args.oris; k++) {
+                v += nw.cols[i][j].ns[k].v[t_ind];
+            }
+            v /= ((float) nw.args.oris * max_v);
             float x = nw.cols[i][j].ns[0].x*delta-1;
             float y = nw.cols[i][j].ns[0].y*delta-1;
             draw_box(red(v), green(v), blue(v), x, y, delta, delta);
