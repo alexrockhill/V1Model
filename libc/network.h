@@ -1,3 +1,9 @@
+#define SLEN 100
+struct network_args {
+	int seed, dim, oris, n_steps;
+	float loc_mu, lat_mu, loc_sig,lat_sig, leak;
+	char loc[SLEN], lat[SLEN];
+};
 struct v1n{
     int x;
     int y;
@@ -8,9 +14,7 @@ struct hc{
 	struct v1n *ns;
 };
 struct network{
-	int dim, oris, n_steps;
-	float loc_sig, lat_sig, seed;
-	char *loc, *lat;
+	struct network_args args;
 	struct hc **cols;
 };
 extern struct network make_network();

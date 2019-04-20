@@ -7,49 +7,43 @@
 #include "network.h"
 #include "random.h"
 
-#define SLEN 100
-
-struct args {
-	int seed, dim, oris, n_steps;
-	float loc_sig,lat_sig, mexican_hat_ratio;
-	char loc[SLEN], lat[SLEN];
-};
-
-struct args parse_args() {
-	struct args this_args;
+struct network_args parse_args() {
+	struct network_args nw_args;
 	FILE *fp = fopen("./bin/args.txt","rb");
 	char args[SLEN];
 	while (fgets(args, SLEN, fp) != NULL) {
 		char *flag = strtok(args, " ");
 		char *ptr = strtok(NULL, " \n");
 		if (strcmp(flag, "--seed") == 0) {
-			this_args.seed = atoi(ptr);
+			nw_args.seed = atoi(ptr);
 		} else if (strcmp(flag, "--dim") == 0){
-			this_args.dim = atoi(ptr);
+			nw_args.dim = atoi(ptr);
 		} else if (strcmp(flag, "--oris") == 0) {
-			this_args.oris = atoi(ptr);} 
+			nw_args.oris = atoi(ptr);} 
 		else if (strcmp(flag, "--n_steps") == 0) {
-			this_args.n_steps = atoi(ptr);
+			nw_args.n_steps = atoi(ptr);
+		} else if (strcmp(flag, "--loc_mu") == 0) {
+			nw_args.loc_mu = strtof(ptr, NULL);
+		} else if (strcmp(flag, "--lat_mu") == 0) {
+			nw_args.lat_mu = strtof(ptr, NULL);
 		} else if (strcmp(flag, "--loc_sig") == 0) {
-			this_args.loc_sig = strtof(ptr, NULL);
+			nw_args.loc_sig = strtof(ptr, NULL);
 		} else if (strcmp(flag, "--lat_sig") == 0) {
-			this_args.lat_sig = strtof(ptr, NULL);
+			nw_args.lat_sig = strtof(ptr, NULL);
+		} else if (strcmp(flag, "--leak") == 0) {
+			nw_args.leak = strtof(ptr, NULL);
 		} else if (strcmp(flag, "--loc") == 0) {
-			strcpy(this_args.loc, ptr);
+			strcpy(nw_args.loc, ptr);
 		} else if (strcmp(flag, "--lat") == 0) {
-			strcpy(this_args.lat, ptr);
+			strcpy(nw_args.lat, ptr);
 		}
 	}
-	return this_args;
+	return nw_args;
 }
 int main()
 {
-	struct args this_args = parse_args();
-	struct network nw = make_network(this_args.dim, this_args.oris, 
-		                             this_args.n_steps,
-		                             this_args.loc_sig, this_args.lat_sig,
-		                             this_args.loc, this_args.lat,
-		                             this_args.seed);
+	struct network_args nw_args = parse_args();
+	struct network nw = make_network(nw_args);
 	plot_network(nw);
 	take_down_network(nw);
 }

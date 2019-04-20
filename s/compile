@@ -15,7 +15,7 @@ echo -n >> ./bin/args.txt
 for ((i=0;i<"$#";++i)); do
 	arg=${!i}
     if [ "${arg:0:2}" == "--" ]; then
-    	if [[ ! "${arg:2:${#arg}-1}" =~ ^(loc|lat|loc_sig|lat_sig|dim|oris|seed|n_steps)$ ]]; then
+    	if [[ ! "${arg:2:${#arg}-1}" =~ ^(loc|lat|loc_mu|lat_mu|loc_sig|lat_sig|dim|oris|seed|n_steps|leak)$ ]]; then
 	    	echo "flag ${arg} not recognized"
             return
         else
@@ -25,8 +25,8 @@ for ((i=0;i<"$#";++i)); do
     fi
 done
 
-keywords=( --loc_sig --lat_sig --dim --oris --seed --loc --lat --n_steps)
-default_args=( 30 5 30 20 13 gaussian mexican_hat 10)
+keywords=(     --loc_mu --lat_mu --loc_sig --lat_sig --dim --oris --seed --loc       --lat       --n_steps --leak)
+default_args=( 0.1      0.01      60        5         20    10     13     mexican_hat gaussian   25          0.5)
 keyword2=$(cut -d' ' -f1 ./bin/args.txt)
 echo $keyword2 | tr " " "\n" >> ./bin/args2.txt
 for ((i=0;i<${#keywords[@]};++i)); do
@@ -64,7 +64,7 @@ Compile random 0
 
   cc -O2 -o ../bin/v1m v1m.c -L../lib -I../libc \
   -L/opt/X11/lib -I/opt/X11/include \
-  -lGL -lX11 -lplot -lnetwork -lrandom
+  -lGL -lX11 -lpng -lplot -lnetwork -lrandom
 
    cd ..
 
@@ -73,3 +73,16 @@ Compile random 0
 #
 
 ./bin/v1m
+
+#
+# Combine png outputs into avi video
+#
+
+COUNTER=0
+while [ -f "dpy/v1network$COUNTER.mp4" ]
+do
+	echo "$COUNTER"
+	COUNTER=$[$COUNTER +1]
+done
+
+ffmpeg -framerate 5 -start_number 2 -i dpy/%d.png "v1network$COUNTER.mp4" && rm dpy/*.png && mv "v1network$COUNTER.mp4" dpy/ || echo "ffmeg not installed, skipping conversion to video"
