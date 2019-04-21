@@ -111,8 +111,8 @@ int plot_network(nw)
   GLXContext            cx;
   XEvent                event;
   int                   screen_num, t_ind, ori_ind;
-  unsigned int          display_width, display_height, size; 
-  float                 delta;
+  unsigned int          display_width, display_height, size, oris_addon; 
+  float                 delta, delta_oris_addon, delta_oris, v, max_v, x, y;
   FILE                  *avconv = NULL;
   static Bool           displayListInited = False;
 
@@ -131,16 +131,20 @@ int plot_network(nw)
   display_width = DisplayWidth(dpy, screen_num);
   display_height = DisplayHeight(dpy, screen_num);
   if (display_width < display_height) {
-    size = display_width*0.8;
+    size = display_width*(0.9 - 0.4*(1.0/(float) nw.args.oris));
   } else {
-    size = display_height*0.8;
+    size = display_height*(0.9 - 0.4*(1.0/(float) nw.args.oris));
   }
-  delta = 2.0/nw.args.dim;
+  delta = 2.0/(float)nw.args.dim;
+  delta_oris = 2.0/(float)nw.args.oris;
+  oris_addon = size/nw.args.oris;
+  delta_oris_addon = (float)size/(float)(size + oris_addon);
+  printf("%i %.2f\n", oris_addon, delta_oris_addon);
   cmap = XCreateColormap(dpy,RootWindow(dpy,vi->screen),vi->visual,AllocNone);
   swa.colormap = cmap;
   swa.border_pixel = 0;
   swa.event_mask = ExposureMask | ButtonPressMask | StructureNotifyMask;
-  win = XCreateWindow(dpy,RootWindow(dpy,vi->screen), 0, 0, size, size,
+  win = XCreateWindow(dpy,RootWindow(dpy,vi->screen), 0, 0, size + oris_addon, size,
     0, vi->depth,InputOutput, vi->visual,
     CWBorderPixel | CWColormap | CWEventMask,
     &swa);
@@ -154,7 +158,7 @@ int plot_network(nw)
   glOrtho(0.0,1.0,0.0,0.0,0.0,1.0);
 
   char fname[300];
-  unsigned char *pixels = malloc(size * size * 4 * sizeof(GL_UNSIGNED_BYTE));
+  unsigned char *pixels = malloc((size + oris_addon) * size * 4 * sizeof(GL_UNSIGNED_BYTE));
 
   t_ind = 0;
   while(t_ind < nw.args.n_steps) {
@@ -163,10 +167,10 @@ int plot_network(nw)
     }
     sprintf(fname, "dpy/%i.png", t_ind);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ACCUM_BUFFER_BIT);
-    float max_v = 0;
+    max_v = 0;
     for(int i=0;i<nw.args.dim;i++){
         for(int j=0;j<nw.args.dim;j++){
-            float v = 0;
+            v = 0;
             for (int k=0; k < nw.args.oris; k++) {
                 v += nw.cols[i][j].ns[k].v[t_ind];
             }
@@ -178,22 +182,35 @@ int plot_network(nw)
     }
     for(int i=0;i<nw.args.dim;i++){
         for(int j=0;j<nw.args.dim;j++){
-            float v = 0;
+            v = 0;
             for (int k=0; k < nw.args.oris; k++) {
                 v += nw.cols[i][j].ns[k].v[t_ind];
             }
             v /= ((float) nw.args.oris * max_v);
-            float x = nw.cols[i][j].ns[0].x*delta-1;
-            float y = nw.cols[i][j].ns[0].y*delta-1;
-            draw_box(red(v), green(v), blue(v), x, y, delta, delta);
+            x = nw.cols[i][j].ns[0].x*delta*delta_oris_addon-1;
+            y = nw.cols[i][j].ns[0].y*delta-1;
+            draw_box(red(v), green(v), blue(v), x, y, delta*delta_oris_addon, delta);
         }
     }
+    for (int k=0; k < nw.args.oris; k++) {
+        v = 0;
+        for(int i=0; i < nw.args.dim; i++){
+            for(int j=0; j < nw.args.dim; j++){
+                v += nw.cols[i][j].ns[k].v[t_ind];
+            }
+        }
+        v /= ((float) nw.args.dim * nw.args.dim * max_v);
+        x = 1.0 - delta_oris;
+        y = k*delta_oris - 1;
+        draw_box(red(v), green(v), blue(v), x, y, delta_oris, delta_oris);
+    }
+
     if(doubleBuffer)
       glXSwapBuffers(dpy, win); 
     else
       glFlush();
     if (t_ind > 1)
-      screenshot_png(fname, size, size, &pixels, &png_bytes, &png_rows);
+      screenshot_png(fname, size + oris_addon, size, &pixels, &png_bytes, &png_rows);
     printf("Time: %i\n", t_ind);
     usleep(500000);
     t_ind++;

@@ -41,6 +41,14 @@ void update_network(nw)
 	} else {
 		fprintf(stderr, "lat %s function not recognized\n", nw.args.lat);
 	}
+	/*for (int k=0; k < nw.args.oris; k++) {
+		n = nw.cols[0][0].ns[k];
+		for (int k1=0; k1 < nw.args.oris; k1++) {
+			ori = nw.cols[0][0].ns[k1].ori;
+			delta_ori = fminf(fabsf(n.ori - ori), fabsf(n.ori - (ori - 180)));
+			printf("%.2f %.2f %.2f\n", n.ori, ori, delta_ori);
+		}
+	}*/
 	printf("Updating network over %i time steps: \n", nw.args.n_steps);
 	for (int t_ind=1; t_ind < nw.args.n_steps; t_ind++) {
 		printf("%i\n", t_ind);
@@ -71,7 +79,8 @@ void update_network(nw)
 		  		    			if (angle < 0) {
 		  		    				angle += 180;
 		  		    			}
-		  		    			if (((i != i1) || (j != j1)) && fabsf(angle - n.ori) < (45.0/(float)nw.args.oris)) {
+		  		    			delta_ori = fminf(fabsf(n.ori - angle), fabsf(n.ori - (angle - 180)));
+		  		    			if (((i != i1) || (j != j1)) && delta_ori < (45.0/(float)nw.args.oris)) {
 		  		    				delta_loc = pow((pow(i - i1, 2) + pow(j - j1, 2)), 0.5);
 		  		    				a = nw.cols[i1][j1].ns[k1].v[t_ind-1];
 		  		    				lat_matrix[i][j][k] += (*lat_f)(delta_loc, nw.args.lat_sig) * logistic(a);
