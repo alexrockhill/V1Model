@@ -21,12 +21,10 @@ void update_network(nw)
 	struct network nw;
 {	
 	struct v1n n;
-	float a;
-	float ori;
-	float delta_ori;
-	float delta_loc;
+	float a, ori, delta_ori, delta_loc;
 	float (*loc_f)(float, float);
 	float (*lat_f)(float, float);
+	int wrap[3];
 	if (strcmp(nw.args.loc,"gaussian") == 0) {
 		loc_f = &gaussian; 
 	} else if (strcmp(nw.args.loc,"mexican_hat") == 0) {
@@ -41,14 +39,7 @@ void update_network(nw)
 	} else {
 		fprintf(stderr, "lat %s function not recognized\n", nw.args.lat);
 	}
-	/*for (int k=0; k < nw.args.oris; k++) {
-		n = nw.cols[0][0].ns[k];
-		for (int k1=0; k1 < nw.args.oris; k1++) {
-			ori = nw.cols[0][0].ns[k1].ori;
-			delta_ori = fminf(fabsf(n.ori - ori), fabsf(n.ori - (ori - 180)));
-			printf("%.2f %.2f %.2f\n", n.ori, ori, delta_ori);
-		}
-	}*/
+	wrap[0] = -nw.args.dim; wrap[1] = 0; wrap[2] = nw.args.dim;
 	printf("Updating network over %i time steps: \n", nw.args.n_steps);
 	for (int t_ind=1; t_ind < nw.args.n_steps; t_ind++) {
 		printf("%i\n", t_ind);
@@ -82,6 +73,12 @@ void update_network(nw)
 		  		    			delta_ori = fminf(fabsf(n.ori - angle), fabsf(n.ori - (angle - 180)));
 		  		    			if (((i != i1) || (j != j1)) && delta_ori < (45.0/(float)nw.args.oris)) {
 		  		    				delta_loc = pow((pow(i - i1, 2) + pow(j - j1, 2)), 0.5);
+		  		    				for (int x_wrap; x_wrap < 3; x_wrap++) {
+		  		    					for (int y_wrap; y_wrap < 3; y_wrap++) {
+		  		    						delta_loc = fminf(delta_loc, 
+		  		    							pow((pow(i - i1 + wrap[x_wrap], 2) + pow(j - j1 + wrap[y_wrap], 2)), 0.5));
+		  		    					}
+		  		    				}
 		  		    				a = nw.cols[i1][j1].ns[k1].v[t_ind-1];
 		  		    				lat_matrix[i][j][k] += (*lat_f)(delta_loc, nw.args.lat_sig) * logistic(a);
 		  		    			}

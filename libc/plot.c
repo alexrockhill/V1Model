@@ -139,7 +139,6 @@ int plot_network(nw)
   delta_oris = 2.0/(float)nw.args.oris;
   oris_addon = size/nw.args.oris;
   delta_oris_addon = (float)size/(float)(size + oris_addon);
-  printf("%i %.2f\n", oris_addon, delta_oris_addon);
   cmap = XCreateColormap(dpy,RootWindow(dpy,vi->screen),vi->visual,AllocNone);
   swa.colormap = cmap;
   swa.border_pixel = 0;
